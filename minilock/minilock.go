@@ -71,18 +71,18 @@ func ID(pk *[32]byte) string {
 
 // header is used to unmarshal the JSON header of a minilock file.
 type header struct {
-	Version     int               `json:"version"`
-	Ephemeral   []byte       `json:"ephemeral"`
-	EncryptedDecryptInfo   map[string][]byte `json:"decryptInfo"`
-	decryptInfo     `json:"-"`
+	Version              int               `json:"version"`
+	Ephemeral            []byte            `json:"ephemeral"`
+	EncryptedDecryptInfo map[string][]byte `json:"decryptInfo"`
+	decryptInfo          `json:"-"`
 }
 
 type decryptInfo struct {
-	SenderID    string `json:"senderID"`
-	RecipientID string `json:"recipientID"`
+	SenderID          string `json:"senderID"`
+	RecipientID       string `json:"recipientID"`
 	EncryptedFileInfo []byte `json:"fileInfo"`
 
-	nonce *[24]byte `json:"-"`
+	nonce    *[24]byte `json:"-"`
 	fileInfo `json:"-"`
 }
 
@@ -225,22 +225,22 @@ func Open(r io.Reader, pk, sk *[32]byte) (filename string, content []byte, err e
 
 	hash := blake2s.Sum256(ciphertext)
 	if subtle.ConstantTimeCompare(hash[:], hdr.FileHash) != 1 {
-		return  "", nil, ErrInvalidCiphertextHash
+		return "", nil, ErrInvalidCiphertextHash
 	}
 
 	content = make([]byte, 0, len(ciphertext))
 	fileKey := sliceTo32Bytes(hdr.FileKey)
-	
+
 	nonce := fullNonce(hdr.FileNonce, 0)
 	name, ok := decryptChunk(nil, ciphertext, nonce, fileKey)
 	if !ok {
 		return "", nil, ErrDecryption
 	}
 	filename = string(name[:bytes.IndexByte(name, 0)])
-	ciphertext = ciphertext[256 + 4 + secretbox.Overhead:]
+	ciphertext = ciphertext[256+4+secretbox.Overhead:]
 
 	for n, lastChunk := uint64(1), false; lastChunk != true; n++ {
-		if len(ciphertext) < 1048576+4+secretbox.Overhead {	// TODO: Use more constants!
+		if len(ciphertext) < 1048576+4+secretbox.Overhead { // TODO: Use more constants!
 			n = n | 1<<63 // Set the most significant bit.
 			lastChunk = true
 		}

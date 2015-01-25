@@ -3,13 +3,13 @@
 package main
 
 import (
-	"fmt"
 	"flag"
-	"os"
+	"fmt"
 	"log"
+	"os"
 
-	"golang.org/x/crypto/ssh/terminal"
 	"github.com/sycamoreone/lock/minilock"
+	"golang.org/x/crypto/ssh/terminal"
 )
 
 var (
@@ -37,14 +37,14 @@ func main() {
 	mailaddr, err := term.ReadLine()
 	if err != nil || len(mailaddr) == 0 {
 		return
-	}	
+	}
 
 	passwd, err := term.ReadPassword(fmt.Sprint("Passphrase (will not be saved to disk): "))
 	if err != nil {
-		term.Write([]byte("Failed to read passphrase: "+err.Error()+"\n"))
+		term.Write([]byte("Failed to read passphrase: " + err.Error() + "\n"))
 		return
 	}
-	
+
 	ourPublic, ourSecret, err := minilock.DeriveKeys([]byte(passwd), []byte(mailaddr))
 	if err != nil {
 		log.Fatalf("error deriving key: %v\n", err)
@@ -68,4 +68,3 @@ func main() {
 		log.Fatalf("error writing to file: %v\n", err)
 	}
 }
-
