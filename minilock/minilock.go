@@ -183,12 +183,19 @@ func Open(r io.Reader, pk, sk *[32]byte) (filename string, content []byte, err e
 	}
 
 	// TODO: A lot of the code below should go into a decryptHeader(hdr *header) function.
+	weAreRecipient := false
 	for n, c := range hdr.EncryptedDecryptInfo {
 		buf, err := decodeBase64(n)
 		if err != nil {
 			return "", nil, err
 		}
+		if len(buf) != 24 {
+			return "", nil, ErrParseHeader
+		}
 		nonce := sliceTo24Bytes(buf)
+		if len(hdr.Ephemeral) != 32 {
+			return "", nil, ErrParseHeader
+		}
 		ephemeral := sliceTo32Bytes(hdr.Ephemeral)
 		if m, ok := box.Open(nil, c, nonce, ephemeral, sk); ok {
 			hdr.nonce = nonce
@@ -196,8 +203,13 @@ func Open(r io.Reader, pk, sk *[32]byte) (filename string, content []byte, err e
 			if err != nil {
 				return "", nil, err
 			}
+			weAreRecipient = true
 			break
 		}
+	}
+
+	if weAreRecipient == false {
+		return "", nil, ErrInvalidRecipient
 	}
 
 	senderPublic, err := IDToPublic(hdr.SenderID)
