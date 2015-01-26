@@ -5,7 +5,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/sycamoreone/lock/minilock"
@@ -17,7 +16,6 @@ var (
 )
 
 func main() {
-	log.SetFlags(log.LstdFlags | log.Llongfile)
 	flag.Parse()
 
 	oldState, err := terminal.MakeRaw(0)
@@ -29,7 +27,8 @@ func main() {
 
 	file, err := os.Open(flag.Arg(0))
 	if err != nil {
-		log.Fatalf("error opening file: %s\n", flag.Arg(0))
+		fmt.Printf("Error opening file: %s\n", flag.Arg(0))
+		return
 	}
 	defer file.Close()
 
@@ -47,7 +46,8 @@ func main() {
 
 	ourPublic, ourSecret, err := minilock.DeriveKeys([]byte(passwd), []byte(mailaddr))
 	if err != nil {
-		log.Fatalf("error deriving key: %v\n", err)
+		fmt.Printf("Error deriving key: %v\n", err)
+		return
 	}
 	term.Write([]byte("Your minilock ID is " + minilock.ID(ourPublic) + "\n"))
 
@@ -55,16 +55,19 @@ func main() {
 
 	filename, content, err := minilock.Open(file, ourPublic, ourSecret)
 	if err != nil {
-		log.Fatalf("error decrypting file: %v\n", err)
+		fmt.Printf("Error decrypting file: %v\n", err)
+		return
 	}
-	term.Write([]byte("Writing decrypted content to " + filename))
+	term.Write([]byte("Writing decrypted content to " + filename + "\n"))
 	file, err = os.Create(filename)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
+		return
 	}
 	defer file.Close()
 	n, err := file.Write(content)
 	if n < len(content) || err != nil {
-		log.Fatalf("error writing to file: %v\n", err)
+		fmt.Printf("Error writing to file: %v\n", err)
+		return
 	}
 }
